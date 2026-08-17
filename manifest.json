@@ -1,0 +1,33 @@
+{
+  "manifest_version": 3,
+  "name": "Amazon Shopping Assistant",
+  "version": "1.0.0",
+  "description": "Amazon ürün sayfalarını analiz eden, LLM destekli akıllı alışveriş asistanı",
+  "permissions": ["storage", "activeTab", "scripting"],
+  "host_permissions": [
+    "https://www.amazon.com/*",
+    "https://www.amazon.com.tr/*",
+    "https://api.anthropic.com/*"
+  ],
+  "background": {
+    "service_worker": "background/background.js"
+  },
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_title": "Amazon Shopping Assistant"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.amazon.com/*/dp/*",
+        "https://www.amazon.com/dp/*",
+        "https://www.amazon.com.tr/*/dp/*",
+        "https://www.amazon.com.tr/dp/*"
+      ],
+      "js": ["content/content.js"],
+      "css": ["content/content.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "options_page": "options/options.html"
+}

@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Ayarlar - Amazon Shopping Assistant</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 420px; margin: 40px auto; }
+    label { display: block; margin-bottom: 6px; font-weight: 600; }
+    input { width: 100%; padding: 8px; box-sizing: border-box; margin-bottom: 10px; }
+    button { padding: 8px 16px; background: #ff9900; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
+    .note { font-size: 12px; color: #666; }
+    #saved { color: green; font-size: 13px; display: none; }
+  </style>
+</head>
+<body>
+  <h2>Amazon Shopping Assistant - Ayarlar</h2>
+  <label for="apiKey">Anthropic API Anahtarı</label>
+  <input id="apiKey" type="password" placeholder="sk-ant-..." />
+  <button id="saveBtn">Kaydet</button>
+  <span id="saved">Kaydedildi ✓</span>
+  <p class="note">
+    Anahtarınız yalnızca bu tarayıcıda (chrome.storage.sync) saklanır ve
+    doğrudan Anthropic API'sine gönderilir; başka bir sunucuya iletilmez.
+  </p>
+  <script src="options.js"></script>
+</body>
+</html>

@@ -1,0 +1,81 @@
+#asa-trigger-btn {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 999999;
+  background: #232f3e;
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  padding: 12px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+}
+#asa-trigger-btn:hover {
+  background: #37475a;
+}
+
+#asa-panel {
+  position: fixed;
+  bottom: 80px;
+  right: 24px;
+  width: 340px;
+  max-height: 480px;
+  overflow-y: auto;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+  z-index: 999999;
+  font-family: Arial, sans-serif;
+  font-size: 13px;
+}
+#asa-panel.asa-hidden {
+  display: none;
+}
+
+.asa-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #ff9900;
+  color: #111;
+  padding: 10px 14px;
+  border-radius: 12px 12px 0 0;
+  font-weight: 700;
+}
+.asa-header button {
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.asa-body {
+  padding: 14px;
+  line-height: 1.5;
+}
+.asa-muted {
+  color: #666;
+}
+.asa-error {
+  color: #b12704;
+}
+.asa-cols {
+  display: flex;
+  gap: 12px;
+  margin: 10px 0;
+}
+.asa-cols > div {
+  flex: 1;
+}
+.asa-cols ul {
+  padding-left: 18px;
+  margin: 4px 0;
+}
+.asa-verdict {
+  border-top: 1px solid #eee;
+  padding-top: 8px;
+  margin-top: 8px;
+}
