@@ -1,7 +1,12 @@
 # Amazon Shopping Assistant
 
-Amazon ürün sayfalarını (client-side, DOM üzerinden) okuyup Anthropic API
-(Claude) ile analiz eden bir Chrome eklentisi (Manifest V3).
+Amazon ürün sayfalarını (client-side, DOM üzerinden) okuyup Google Gemini API
+ile analiz eden bir Chrome eklentisi (Manifest V3).
+
+## Özellikler
+- Tek ürün analizi (özet, artılar, eksiler, tavsiye)
+- Türkçe / İngilizce arayüz ve analiz dili desteği
+- 2-4 ürünü birbiriyle karşılaştırma (ayrı bir sekmede, puanlama ve öneri ile)
 
 ## Kurulum
 1. `chrome://extensions` adresine gidin.
@@ -20,13 +25,16 @@ amazon-shopping-assistant/
 │   ├── content.js         # Sayfa DOM'unu kazır, buton/panel enjekte eder
 │   └── content.css        # Panel ve butonun stili
 ├── background/
-│   └── background.js      # Service worker: mesajları dinler, API çağrısını başlatır
+│   └── background.js      # Service worker: mesajları dinler, API çağrılarını başlatır
 ├── lib/
-│   └── llm-client.js      # Anthropic API'ye istek atan yardımcı fonksiyon
+│   ├── llm-client.js      # Gemini API'ye istek atan yardımcı fonksiyonlar (analiz + karşılaştırma)
+│   └── i18n.js            # TR/EN çeviri sözlüğü ve dil yardımcıları
 ├── popup/
 │   ├── popup.html/js/css  # Toolbar ikonuna tıklayınca açılan küçük pencere
-└── options/
-    └── options.html/js    # API anahtarının girildiği ayarlar sayfası
+├── options/
+│   └── options.html/js    # API anahtarı ve dil ayarlarının girildiği sayfa
+└── compare/
+    └── compare.html/js/css # Ürün karşılaştırma sayfası (ayrı sekmede açılır)
 ```
 
 ## Not

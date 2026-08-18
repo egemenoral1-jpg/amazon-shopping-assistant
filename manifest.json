@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Amazon Shopping Assistant",
-  "version": "1.0.0",
-  "description": "Amazon ürün sayfalarını analiz eden, LLM destekli akıllı alışveriş asistanı",
+  "version": "1.1.0",
+  "description": "Amazon ürün sayfalarını analiz eden, LLM destekli akıllı alışveriş asistanı (TR/EN dil desteği ve ürün karşılaştırma)",
   "permissions": ["storage", "activeTab", "scripting"],
   "host_permissions": [
     "https://www.amazon.com/*",
@@ -24,7 +24,7 @@
         "https://www.amazon.com.tr/*/dp/*",
         "https://www.amazon.com.tr/dp/*"
       ],
-      "js": ["content/content.js"],
+      "js": ["lib/i18n.js", "content/content.js"],
       "css": ["content/content.css"],
       "run_at": "document_idle"
     }

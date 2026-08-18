@@ -2,18 +2,25 @@
 const statusEl = document.getElementById("status");
 const analyzeBtn = document.getElementById("analyzeBtn");
 const optionsBtn = document.getElementById("optionsBtn");
+const compareBtn = document.getElementById("compareBtn");
 
 const AMAZON_DP_REGEX = /amazon\.[a-z.]+\/.*\/dp\//;
 
 async function init() {
+  const lang = await getLang();
+
+  analyzeBtn.textContent = t("analyzeThisPage", lang);
+  optionsBtn.textContent = t("setApiKey", lang);
+  compareBtn.textContent = t("compareProducts", lang);
+
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   const isProductPage = tab && AMAZON_DP_REGEX.test(tab.url || "");
 
   if (isProductPage) {
-    statusEl.textContent = "Bu sayfa desteklenen bir Amazon ürün sayfası. ✅";
+    statusEl.textContent = t("supportedPage", lang);
     analyzeBtn.disabled = false;
   } else {
-    statusEl.textContent = "Bir Amazon ürün (dp) sayfasına gidin.";
+    statusEl.textContent = t("goToProduct", lang);
     analyzeBtn.disabled = true;
   }
 }
@@ -25,6 +32,11 @@ analyzeBtn.addEventListener("click", async () => {
     target: { tabId: tab.id },
     func: () => document.getElementById("asa-trigger-btn")?.click(),
   });
+  window.close();
+});
+
+compareBtn.addEventListener("click", () => {
+  chrome.tabs.create({ url: chrome.runtime.getURL("compare/compare.html") });
   window.close();
 });
 

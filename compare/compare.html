@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Ürün Karşılaştırma - Amazon Shopping Assistant</title>
+  <link rel="stylesheet" href="compare.css" />
+</head>
+<body>
+  <div class="wrap">
+    <div class="top-row">
+      <h1 id="titleEl">🔍 Ürün Karşılaştırma</h1>
+      <button id="clearBtn" class="secondary">Tümünü Temizle</button>
+    </div>
+
+    <div id="productList" class="product-grid"></div>
+
+    <button id="compareBtn" class="primary" disabled>🤖 AI ile Karşılaştır</button>
+
+    <div id="resultArea"></div>
+  </div>
+
+  <script src="../lib/i18n.js"></script>
+  <script src="compare.js"></script>
+</body>
+</html>

@@ -1,14 +1,17 @@
 // content/content.js
 // Bu script sadece bir Amazon ürün (dp) sayfası açıldığında çalışır.
 // Görevi: (1) sayfadaki veriyi DOM'dan oku, (2) kullanıcıya bir "AI Analiz" butonu göster,
-// (3) tıklanınca veriyi background'a gönder, (4) gelen sonucu ekranda göster.
+// (3) tıklanınca veriyi background'a gönder, (4) gelen sonucu ekranda göster,
+// (5) istenirse ürünü karşılaştırma listesine ekle.
+// NOT: i18n.js bu dosyadan ÖNCE yüklenir (manifest.json içinde sıralama önemli),
+// bu yüzden t() ve I18N burada hazır olarak kullanılabilir.
 
 (function () {
   "use strict";
 
+  let LANG = "tr"; // background'dan/storage'dan okunana kadar varsayılan
+
   // ---------- 1) KAZIMA (SCRAPING) KATMANI ----------
-  // Amazon sayfa yapısı sık değiştiği + ülkeye göre farklılaştığı için
-  // her alan için birden fazla CSS seçici deniyoruz (fallback listesi).
   function firstMatchText(selectors) {
     for (const sel of selectors) {
       const el = document.querySelector(sel);
@@ -37,7 +40,6 @@
       "span[data-hook='total-review-count']",
     ]);
 
-    // Ürün özellik maddeleri (bullet points)
     const bullets = Array.from(
       document.querySelectorAll("#feature-bullets li span.a-list-item")
     )
@@ -45,7 +47,6 @@
       .filter(Boolean)
       .slice(0, 10);
 
-    // Görünen ilk birkaç müşteri yorumu (varsa)
     const reviews = Array.from(
       document.querySelectorAll("[data-hook='review-body'] span")
     )
@@ -74,7 +75,7 @@
 
     const btn = document.createElement("button");
     btn.id = "asa-trigger-btn";
-    btn.textContent = "🤖 AI ile Analiz Et";
+    btn.textContent = t("analyzeBtn", LANG);
     document.body.appendChild(btn);
 
     const panel = document.createElement("div");
@@ -82,11 +83,11 @@
     panel.className = "asa-hidden";
     panel.innerHTML = `
       <div class="asa-header">
-        <span>Amazon Shopping Assistant</span>
+        <span>${t("panelTitle", LANG)}</span>
         <button id="asa-close-btn">×</button>
       </div>
       <div id="asa-body" class="asa-body">
-        <p class="asa-muted">Analiz başlatmak için butona tıklayın.</p>
+        <p class="asa-muted">${t("clickToStart", LANG)}</p>
       </div>
     `;
     document.body.appendChild(panel);
@@ -109,36 +110,31 @@
     const product = scrapeProduct();
 
     if (!product.title) {
-      setBody(
-        `<p class="asa-error">Ürün bilgisi okunamadı. Sayfa yapısı desteklenmiyor olabilir.</p>`
-      );
+      setBody(`<p class="asa-error">${t("cannotRead", LANG)}</p>`);
       return;
     }
 
-    setBody(`<p class="asa-muted">⏳ Ürün verisi toplandı, LLM analizi bekleniyor...</p>`);
+    setBody(`<p class="asa-muted">${t("collecting", LANG)}</p>`);
 
-    // Kazınan veriyi background service worker'a gönderiyoruz.
-    // Gerçek API çağrısı background'da yapılır (API anahtarını content script'te tutmamak için).
     chrome.runtime.sendMessage(
       { type: "ANALYZE_PRODUCT", payload: product },
       (response) => {
         if (chrome.runtime.lastError) {
-          setBody(`<p class="asa-error">Hata: ${chrome.runtime.lastError.message}</p>`);
+          setBody(`<p class="asa-error">${chrome.runtime.lastError.message}</p>`);
           return;
         }
         if (!response || !response.ok) {
           setBody(
-            `<p class="asa-error">${(response && response.error) || "Bilinmeyen hata"}</p>`
+            `<p class="asa-error">${(response && response.error) || t("unknownError", LANG)}</p>`
           );
           return;
         }
-        renderAnalysis(response.data);
+        renderAnalysis(response.data, product);
       }
     );
   }
 
-  function renderAnalysis(data) {
-    // data: { summary, pros, cons, verdict, fairPrice }
+  function renderAnalysis(data, product) {
     const prosHtml = (data.pros || []).map((p) => `<li>${p}</li>`).join("");
     const consHtml = (data.cons || []).map((c) => `<li>${c}</li>`).join("");
 
@@ -146,17 +142,47 @@
       <p class="asa-summary">${data.summary || ""}</p>
       <div class="asa-cols">
         <div>
-          <h4>✅ Artılar</h4>
+          <h4>${t("pros", LANG)}</h4>
           <ul>${prosHtml}</ul>
         </div>
         <div>
-          <h4>⚠️ Eksiler</h4>
+          <h4>${t("cons", LANG)}</h4>
           <ul>${consHtml}</ul>
         </div>
       </div>
-      <p class="asa-verdict"><strong>Sonuç:</strong> ${data.verdict || ""}</p>
+      <p class="asa-verdict"><strong>${t("verdict", LANG)}</strong> ${data.verdict || ""}</p>
+      <button id="asa-add-compare-btn" class="asa-secondary-btn">${t("addToCompare", LANG)}</button>
+      <p id="asa-compare-msg" class="asa-muted asa-compare-msg"></p>
     `);
+
+    document
+      .getElementById("asa-add-compare-btn")
+      .addEventListener("click", () => addToComparison(product));
   }
 
-  createPanel();
+  async function addToComparison(product) {
+    const msgEl = document.getElementById("asa-compare-msg");
+    const { comparisonList } = await chrome.storage.local.get("comparisonList");
+    const list = comparisonList || [];
+
+    if (list.some((p) => p.url === product.url)) {
+      msgEl.textContent = t("alreadyAdded", LANG);
+      return;
+    }
+    if (list.length >= 4) {
+      msgEl.textContent = t("maxReached", LANG);
+      return;
+    }
+
+    list.push(product);
+    await chrome.storage.local.set({ comparisonList: list });
+    msgEl.textContent = t("addedToCompare", LANG);
+  }
+
+  async function init() {
+    LANG = await getLang();
+    createPanel();
+  }
+
+  init();
 })();

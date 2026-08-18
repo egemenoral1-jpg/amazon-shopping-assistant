@@ -6,25 +6,35 @@
   <style>
     body { font-family: Arial, sans-serif; max-width: 420px; margin: 40px auto; }
     label { display: block; margin-bottom: 6px; font-weight: 600; }
-    input { width: 100%; padding: 8px; box-sizing: border-box; margin-bottom: 10px; }
+    input, select { width: 100%; padding: 8px; box-sizing: border-box; margin-bottom: 16px; }
     button { padding: 8px 16px; background: #ff9900; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
     .note { font-size: 12px; color: #666; }
-    #saved { color: green; font-size: 13px; display: none; }
+    #saved { color: green; font-size: 13px; display: none; margin-left: 8px; }
   </style>
 </head>
 <body>
-  <h2>Amazon Shopping Assistant - Ayarlar</h2>
-  <label for="apiKey">Google Gemini API Anahtarı</label>
+  <h2 id="titleEl">Amazon Shopping Assistant - Ayarlar</h2>
+
+  <label for="apiKey" id="apiKeyLabel">Google Gemini API Anahtarı</label>
   <input id="apiKey" type="password" placeholder="AIza..." />
+
+  <label for="langSelect" id="langLabel">Arayüz ve Analiz Dili</label>
+  <select id="langSelect">
+    <option value="tr">Türkçe</option>
+    <option value="en">English</option>
+  </select>
+
   <button id="saveBtn">Kaydet</button>
   <span id="saved">Kaydedildi ✓</span>
-  <p class="note">
+
+  <p class="note" id="noteEl">
+    Anahtarınız yalnızca bu tarayıcıda (chrome.storage.local) saklanır ve
+    doğrudan Gemini API'sine gönderilir; başka bir sunucuya iletilmez.
     Ücretsiz anahtar almak için
-    <a href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com/apikey</a>
-    adresine gidin (kredi kartı istemez). Anahtarınız yalnızca bu
-    tarayıcıda (chrome.storage.sync) saklanır ve doğrudan Google'ın
-    API'sine gönderilir; başka bir sunucuya iletilmez.
+    <a href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com/apikey</a>.
   </p>
+
+  <script src="../lib/i18n.js"></script>
   <script src="options.js"></script>
 </body>
 </html>

@@ -5,18 +5,36 @@
 importScripts("../lib/llm-client.js");
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.type !== "ANALYZE_PRODUCT") return; // bu mesaj bizi ilgilendirmiyor
+  if (message.type === "ANALYZE_PRODUCT") {
+    handleAnalyzeRequest(message.payload)
+      .then((data) => sendResponse({ ok: true, data }))
+      .catch((err) => sendResponse({ ok: false, error: err.message }));
+    return true; // async sendResponse kullanacağımızı Chrome'a bildiriyoruz
+  }
 
-  handleAnalyzeRequest(message.payload)
-    .then((data) => sendResponse({ ok: true, data }))
-    .catch((err) => sendResponse({ ok: false, error: err.message }));
+  if (message.type === "COMPARE_PRODUCTS") {
+    handleCompareRequest(message.payload)
+      .then((data) => sendResponse({ ok: true, data }))
+      .catch((err) => sendResponse({ ok: false, error: err.message }));
+    return true;
+  }
 
-  // Async sendResponse kullanacağımızı Chrome'a bildirmek için true dönüyoruz.
-  return true;
+  if (message.type === "OPEN_COMPARE_PAGE") {
+    chrome.tabs.create({ url: chrome.runtime.getURL("compare/compare.html") });
+    return false; // senkron, cevap beklemiyoruz
+  }
 });
 
+async function getSettings() {
+  const { geminiApiKey, uiLanguage } = await chrome.storage.local.get([
+    "geminiApiKey",
+    "uiLanguage",
+  ]);
+  return { geminiApiKey, uiLanguage: uiLanguage || "tr" };
+}
+
 async function handleAnalyzeRequest(product) {
-  const { geminiApiKey } = await chrome.storage.sync.get("geminiApiKey");
+  const { geminiApiKey, uiLanguage } = await getSettings();
 
   if (!geminiApiKey) {
     throw new Error(
@@ -24,5 +42,17 @@ async function handleAnalyzeRequest(product) {
     );
   }
 
-  return analyzeProductWithLLM(product, geminiApiKey);
+  return analyzeProductWithLLM(product, geminiApiKey, uiLanguage);
+}
+
+async function handleCompareRequest(products) {
+  const { geminiApiKey, uiLanguage } = await getSettings();
+
+  if (!geminiApiKey) {
+    throw new Error(
+      "API anahtarı ayarlanmamış. Eklenti ayarlarından Google Gemini API anahtarınızı girin."
+    );
+  }
+
+  return compareProductsWithLLM(products, geminiApiKey, uiLanguage);
 }
