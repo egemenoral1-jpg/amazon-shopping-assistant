@@ -162,3 +162,72 @@
   margin: 6px 0 0;
   font-size: 12px;
 }
+.asa-alt-list {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+.asa-alt-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid #eee;
+  border-radius: 6px;
+  text-decoration: none;
+  color: #111;
+  font-size: 12px;
+  background: #fafafa;
+}
+.asa-alt-item:hover {
+  background: #f0f0f0;
+}
+.asa-alt-title {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.asa-alt-price {
+  flex-shrink: 0;
+  font-weight: 700;
+  color: #067d62;
+}
+
+/* ---------- SİTEYE ÖZEL TEMALAR ---------- */
+/* Her site kendi marka renklerini kullansın diye, panel/butonun data-asa-site
+   attribute'üne göre üzerine yazıyoruz. Yukarıdaki kurallar varsayılan (Amazon). */
+
+/* Trendyol: turuncu marka rengi */
+#asa-trigger-btn[data-asa-site="trendyol"] {
+  background: #f27a1a;
+}
+#asa-trigger-btn[data-asa-site="trendyol"]:hover {
+  background: #d96a12;
+}
+#asa-panel[data-asa-site="trendyol"] .asa-header {
+  background: #f27a1a;
+  color: #fff;
+}
+#asa-panel[data-asa-site="trendyol"] .asa-site-badge {
+  background: #f27a1a;
+}
+
+/* Hepsiburada: turuncu-kırmızı marka rengi */
+#asa-trigger-btn[data-asa-site="hepsiburada"] {
+  background: #ff6000;
+}
+#asa-trigger-btn[data-asa-site="hepsiburada"]:hover {
+  background: #e05500;
+}
+#asa-panel[data-asa-site="hepsiburada"] .asa-header {
+  background: #ff6000;
+  color: #fff;
+}
+#asa-panel[data-asa-site="hepsiburada"] .asa-site-badge {
+  background: #ff6000;
+}

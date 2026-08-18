@@ -157,13 +157,17 @@
   function createPanel() {
     if (document.getElementById("asa-panel")) return;
 
+    const site = detectSite();
+
     const btn = document.createElement("button");
     btn.id = "asa-trigger-btn";
+    btn.dataset.asaSite = site || "";
     btn.textContent = t("analyzeBtn", LANG);
     document.body.appendChild(btn);
 
     const panel = document.createElement("div");
     panel.id = "asa-panel";
+    panel.dataset.asaSite = site || "";
     panel.className = "asa-hidden";
     panel.innerHTML = `
       <div class="asa-header">
@@ -181,6 +185,95 @@
     });
 
     btn.addEventListener("click", handleAnalyzeClick);
+  }
+
+  // ---------- 2.5) BENZER ÜRÜN ARAMA ----------
+  // Aynı site üzerinde (aynı origin) bir arama isteği atıp sonuç sayfasını
+  // arka planda çekiyoruz, sonra o HTML'i tarayarak ürün linklerini çıkarıyoruz.
+  // Class isimlerine güvenmek yerine, zaten güvendiğimiz URL kalıplarını
+  // (Amazon: /dp/, Trendyol & Hepsiburada: -p-) kullanıyoruz - bu, site
+  // tasarımı değişse bile daha dayanıklı bir yöntem.
+  function buildSearchQuery(title) {
+    if (!title) return "";
+    return title.split(/\s+/).slice(0, 5).join(" ");
+  }
+
+  function buildSearchUrl(site, query) {
+    const q = encodeURIComponent(query);
+    if (site === "trendyol") return `https://www.trendyol.com/sr?q=${q}`;
+    if (site === "hepsiburada") return `https://www.hepsiburada.com/ara?q=${q}`;
+    return `${location.origin}/s?k=${q}`; // amazon.com ya da amazon.com.tr, hangisindeysek
+  }
+
+  function extractCandidatesFromSearchHtml(doc, site, currentUrl) {
+    const pattern = site === "amazon" ? "a[href*='/dp/']" : "a[href*='-p-']";
+    const anchors = Array.from(doc.querySelectorAll(pattern));
+    const seen = new Set();
+    const results = [];
+
+    for (const a of anchors) {
+      const href = a.getAttribute("href");
+      if (!href) continue;
+
+      let absUrl;
+      try {
+        absUrl = new URL(href, location.origin).href;
+      } catch {
+        continue;
+      }
+      if (seen.has(absUrl) || absUrl === currentUrl) continue;
+      seen.add(absUrl);
+
+      const container = a.closest("div,li,article") || a;
+      let title = (a.textContent || "").trim();
+      if (title.length < 5) title = container.textContent.trim().slice(0, 140);
+      if (!title) continue;
+
+      const priceMatch = container.textContent.match(
+        /[\d]{1,3}(?:[.,]\d{3})*(?:[.,]\d{1,2})?\s*(TL|₺|\$)/
+      );
+
+      results.push({
+        title: title.slice(0, 140),
+        url: absUrl,
+        price: priceMatch ? priceMatch[0].trim() : null,
+      });
+
+      if (results.length >= 8) break;
+    }
+
+    return results;
+  }
+
+  async function findAlternatives(product) {
+    const box = document.getElementById("asa-alternatives-box");
+    box.innerHTML = `<p class="asa-muted">${t("searchingAlternatives", LANG)}</p>`;
+
+    try {
+      const query = buildSearchQuery(product.title);
+      const searchUrl = buildSearchUrl(product.site, query);
+      const res = await fetch(searchUrl, { credentials: "include" });
+      const html = await res.text();
+      const doc = new DOMParser().parseFromString(html, "text/html");
+      const candidates = extractCandidatesFromSearchHtml(doc, product.site, product.url);
+
+      if (candidates.length === 0) {
+        box.innerHTML = `<p class="asa-muted">${t("noAlternatives", LANG)}</p>`;
+        return;
+      }
+
+      box.innerHTML = candidates
+        .map(
+          (c) => `
+        <a class="asa-alt-item" href="${escapeHtml(c.url)}" target="_blank" rel="noopener">
+          <span class="asa-alt-title">${escapeHtml(c.title)}</span>
+          ${c.price ? `<span class="asa-alt-price">${escapeHtml(c.price)}</span>` : ""}
+        </a>`
+        )
+        .join("");
+    } catch (err) {
+      box.innerHTML = `<p class="asa-error">${escapeHtml(err.message)}</p>`;
+    }
   }
 
   function setBody(html) {
@@ -338,6 +431,9 @@
 
       <button id="asa-add-compare-btn" class="asa-secondary-btn">${t("addToCompare", LANG)}</button>
       <p id="asa-compare-msg" class="asa-muted asa-compare-msg"></p>
+
+      <button id="asa-alternatives-btn" class="asa-secondary-btn">${t("alternativesBtn", LANG)}</button>
+      <div id="asa-alternatives-box" class="asa-alt-list"></div>
     `);
 
     document
@@ -347,6 +443,10 @@
     document
       .getElementById("asa-verify-btn")
       .addEventListener("click", () => runVerification(product, data));
+
+    document
+      .getElementById("asa-alternatives-btn")
+      .addEventListener("click", () => findAlternatives(product));
 
     saveToHistory(product, data);
   }
