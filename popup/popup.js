@@ -4,7 +4,8 @@ const analyzeBtn = document.getElementById("analyzeBtn");
 const optionsBtn = document.getElementById("optionsBtn");
 const compareBtn = document.getElementById("compareBtn");
 
-const AMAZON_DP_REGEX = /amazon\.[a-z.]+\/.*\/dp\//;
+const SUPPORTED_PAGE_REGEX =
+  /amazon\.[a-z.]+\/.*\/dp\/|trendyol\.com\/.+-p-\d|hepsiburada\.com\/.+-p-/;
 
 async function init() {
   const lang = await getLang();
@@ -14,7 +15,7 @@ async function init() {
   compareBtn.textContent = t("compareProducts", lang);
 
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  const isProductPage = tab && AMAZON_DP_REGEX.test(tab.url || "");
+  const isProductPage = tab && SUPPORTED_PAGE_REGEX.test(tab.url || "");
 
   if (isProductPage) {
     statusEl.textContent = t("supportedPage", lang);

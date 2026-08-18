@@ -11,7 +11,11 @@ function applyStaticTexts() {
   document.getElementById("titleEl").textContent = t("compareTitle", LANG);
   clearBtn.textContent = t("clearAll", LANG);
   compareBtn.textContent = t("compareBtn", LANG);
+  document.getElementById("purposeLabelEl").textContent = t("purposeLabel", LANG);
+  document.getElementById("comparePurposeInput").placeholder = t("purposePlaceholder", LANG);
 }
+
+const SITE_LABELS = { amazon: "Amazon", trendyol: "Trendyol", hepsiburada: "Hepsiburada" };
 
 function renderList() {
   if (currentList.length === 0) {
@@ -25,6 +29,7 @@ function renderList() {
       (p, i) => `
       <div class="product-card">
         <button class="remove-btn" data-index="${i}" title="${t("removeBtn", LANG)}">✕</button>
+        ${SITE_LABELS[p.site] ? `<span class="site-badge">${SITE_LABELS[p.site]}</span>` : ""}
         <h3>${escapeHtml(p.title || "-")}</h3>
         <p class="meta">💰 ${escapeHtml(p.price || "-")}</p>
         <p class="meta">⭐ ${escapeHtml(p.rating || "-")}</p>
@@ -74,8 +79,10 @@ compareBtn.addEventListener("click", () => {
   resultArea.innerHTML = `<p class="asa-muted">${t("comparing", LANG)}</p>`;
   compareBtn.disabled = true;
 
+  const purpose = document.getElementById("comparePurposeInput").value.trim();
+
   chrome.runtime.sendMessage(
-    { type: "COMPARE_PRODUCTS", payload: currentList },
+    { type: "COMPARE_PRODUCTS", payload: { products: currentList, purpose } },
     (response) => {
       compareBtn.disabled = currentList.length < 2;
 

@@ -4,9 +4,19 @@ Amazon ürün sayfalarını (client-side, DOM üzerinden) okuyup Google Gemini A
 ile analiz eden bir Chrome eklentisi (Manifest V3).
 
 ## Özellikler
+- Amazon, Trendyol ve Hepsiburada ürün sayfalarında çalışır
 - Tek ürün analizi (özet, artılar, eksiler, tavsiye)
+- Sayfadan kazınan gerçek kullanıcı yorumlarını panelde gösterir
 - Türkçe / İngilizce arayüz ve analiz dili desteği
 - 2-4 ürünü birbiriyle karşılaştırma (ayrı bir sekmede, puanlama ve öneri ile)
+
+## Bilinen sınırlama
+Trendyol ve Hepsiburada için kullanılan CSS seçicileri en iyi tahmindir (bu sitelerin
+canlı yapısı test edilerek doğrulanmadı). Panelde "Ürün bilgisi okunamadı" hatası
+alırsanız, ilgili sitenin ürün sayfasında F12 (DevTools) ile başlık/fiyat/yorum
+elemanlarının class isimlerini kontrol edip `content/content.js` içindeki
+`scrapeTrendyol()` / `scrapeHepsiburada()` fonksiyonlarındaki seçicileri güncellemek
+gerekebilir.
 
 ## Kurulum
 1. `chrome://extensions` adresine gidin.

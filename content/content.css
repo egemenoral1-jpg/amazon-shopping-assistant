@@ -79,6 +79,53 @@
   padding-top: 8px;
   margin-top: 8px;
 }
+.asa-site-badge {
+  display: inline-block;
+  background: #232f3e;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  margin-bottom: 8px;
+}
+.asa-purpose-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px;
+  margin: 8px 0;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 12px;
+}
+.asa-sentiment {
+  margin-top: 10px;
+  border-top: 1px solid #eee;
+  padding-top: 8px;
+  font-size: 12px;
+}
+.asa-reviews-details {
+  margin-top: 10px;
+  border-top: 1px solid #eee;
+  padding-top: 8px;
+}
+.asa-reviews-details summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 12px;
+}
+.asa-reviews-list {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  max-height: 160px;
+  overflow-y: auto;
+}
+.asa-reviews-list li {
+  margin-bottom: 8px;
+  font-size: 12px;
+  color: #333;
+  line-height: 1.4;
+}
 .asa-secondary-btn {
   width: 100%;
   margin-top: 10px;

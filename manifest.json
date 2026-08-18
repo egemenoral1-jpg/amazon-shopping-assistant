@@ -1,12 +1,14 @@
 {
   "manifest_version": 3,
   "name": "Amazon Shopping Assistant",
-  "version": "1.1.0",
-  "description": "Amazon ürün sayfalarını analiz eden, LLM destekli akıllı alışveriş asistanı (TR/EN dil desteği ve ürün karşılaştırma)",
+  "version": "1.2.0",
+  "description": "Amazon, Trendyol ve Hepsiburada ürün sayfalarını analiz eden, LLM destekli akıllı alışveriş asistanı (TR/EN dil desteği, ürün karşılaştırma ve yorum görüntüleme)",
   "permissions": ["storage", "activeTab", "scripting"],
   "host_permissions": [
     "https://www.amazon.com/*",
     "https://www.amazon.com.tr/*",
+    "https://www.trendyol.com/*",
+    "https://www.hepsiburada.com/*",
     "https://generativelanguage.googleapis.com/*"
   ],
   "background": {
@@ -22,7 +24,9 @@
         "https://www.amazon.com/*/dp/*",
         "https://www.amazon.com/dp/*",
         "https://www.amazon.com.tr/*/dp/*",
-        "https://www.amazon.com.tr/dp/*"
+        "https://www.amazon.com.tr/dp/*",
+        "https://www.trendyol.com/*-p-*",
+        "https://www.hepsiburada.com/*-p-*"
       ],
       "js": ["lib/i18n.js", "content/content.js"],
       "css": ["content/content.css"],

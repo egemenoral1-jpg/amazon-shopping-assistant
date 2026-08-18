@@ -6,6 +6,7 @@ importScripts("../lib/llm-client.js");
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === "ANALYZE_PRODUCT") {
+    // payload: { product, purpose }
     handleAnalyzeRequest(message.payload)
       .then((data) => sendResponse({ ok: true, data }))
       .catch((err) => sendResponse({ ok: false, error: err.message }));
@@ -13,6 +14,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 
   if (message.type === "COMPARE_PRODUCTS") {
+    // payload: { products, purpose }
     handleCompareRequest(message.payload)
       .then((data) => sendResponse({ ok: true, data }))
       .catch((err) => sendResponse({ ok: false, error: err.message }));
@@ -33,7 +35,7 @@ async function getSettings() {
   return { geminiApiKey, uiLanguage: uiLanguage || "tr" };
 }
 
-async function handleAnalyzeRequest(product) {
+async function handleAnalyzeRequest({ product, purpose }) {
   const { geminiApiKey, uiLanguage } = await getSettings();
 
   if (!geminiApiKey) {
@@ -42,10 +44,10 @@ async function handleAnalyzeRequest(product) {
     );
   }
 
-  return analyzeProductWithLLM(product, geminiApiKey, uiLanguage);
+  return analyzeProductWithLLM(product, geminiApiKey, uiLanguage, purpose);
 }
 
-async function handleCompareRequest(products) {
+async function handleCompareRequest({ products, purpose }) {
   const { geminiApiKey, uiLanguage } = await getSettings();
 
   if (!geminiApiKey) {
@@ -54,5 +56,5 @@ async function handleCompareRequest(products) {
     );
   }
 
-  return compareProductsWithLLM(products, geminiApiKey, uiLanguage);
+  return compareProductsWithLLM(products, geminiApiKey, uiLanguage, purpose);
 }
