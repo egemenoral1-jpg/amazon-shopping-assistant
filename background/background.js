@@ -13,6 +13,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true; // async sendResponse kullanacağımızı Chrome'a bildiriyoruz
   }
 
+  if (message.type === "VERIFY_ANALYSIS") {
+    // payload: { product, analysis }
+    // Doğrulama artık otomatik değil, isteğe bağlı (buton ile tetiklenir) - kotayı
+    // gereksiz yere ikiye katlamamak için.
+    handleVerifyRequest(message.payload)
+      .then((data) => sendResponse({ ok: true, data }))
+      .catch((err) => sendResponse({ ok: false, error: err.message }));
+    return true;
+  }
+
   if (message.type === "COMPARE_PRODUCTS") {
     // payload: { products, purpose }
     handleCompareRequest(message.payload)
@@ -44,18 +54,19 @@ async function handleAnalyzeRequest({ product, purpose }) {
     );
   }
 
-  const analysis = await analyzeProductWithLLM(product, geminiApiKey, uiLanguage, purpose);
+  return analyzeProductWithLLM(product, geminiApiKey, uiLanguage, purpose);
+}
 
-  // İkinci bir model çağrısıyla ilk analizi eleştirel gözle kontrol ediyoruz.
-  // Bu adım başarısız olursa (örn. rate limit), ana analiz sonucu yine de kaybolmasın.
-  let verification = null;
-  try {
-    verification = await verifyAnalysisWithLLM(product, analysis, geminiApiKey, uiLanguage);
-  } catch (err) {
-    verification = null;
+async function handleVerifyRequest({ product, analysis }) {
+  const { geminiApiKey, uiLanguage } = await getSettings();
+
+  if (!geminiApiKey) {
+    throw new Error(
+      "API anahtarı ayarlanmamış. Eklenti ayarlarından Google Gemini API anahtarınızı girin."
+    );
   }
 
-  return { ...analysis, verification };
+  return verifyAnalysisWithLLM(product, analysis, geminiApiKey, uiLanguage);
 }
 
 async function handleCompareRequest({ products, purpose }) {

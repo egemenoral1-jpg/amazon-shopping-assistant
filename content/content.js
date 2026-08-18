@@ -271,16 +271,35 @@
     return t(map[level] || "confidenceMedium", LANG);
   }
 
-  function renderVerificationHtml(v) {
-    if (!v) return "";
+  function renderVerificationResultHtml(v) {
     const concerns = (v.concerns || []).map((c) => `<li>${escapeHtml(c)}</li>`).join("");
     return `
-      <div class="asa-verification">
-        <strong>${t("verificationLabel", LANG)}:</strong> ${confidenceLabel(v.confidence)}
-        ${concerns ? `<ul class="asa-concerns-list">${concerns}</ul>` : ""}
-        ${v.correction ? `<p class="asa-muted">${escapeHtml(v.correction)}</p>` : ""}
-      </div>
+      <strong>${t("verificationLabel", LANG)}:</strong> ${confidenceLabel(v.confidence)}
+      ${concerns ? `<ul class="asa-concerns-list">${concerns}</ul>` : ""}
+      ${v.correction ? `<p class="asa-muted">${escapeHtml(v.correction)}</p>` : ""}
     `;
+  }
+
+  function runVerification(product, analysis) {
+    const box = document.getElementById("asa-verification-box");
+    box.innerHTML = `<p class="asa-muted">${t("collecting", LANG)}</p>`;
+
+    chrome.runtime.sendMessage(
+      { type: "VERIFY_ANALYSIS", payload: { product, analysis } },
+      (response) => {
+        if (chrome.runtime.lastError) {
+          box.innerHTML = `<p class="asa-error">${chrome.runtime.lastError.message}</p>`;
+          return;
+        }
+        if (!response || !response.ok) {
+          box.innerHTML = `<p class="asa-error">${
+            (response && response.error) || t("unknownError", LANG)
+          }</p>`;
+          return;
+        }
+        box.innerHTML = renderVerificationResultHtml(response.data);
+      }
+    );
   }
 
   function renderAnalysis(data, product) {
@@ -303,7 +322,9 @@
       </div>
       <p class="asa-verdict"><strong>${t("verdict", LANG)}</strong> ${escapeHtml(data.verdict || "")}</p>
 
-      ${renderVerificationHtml(data.verification)}
+      <div class="asa-verification" id="asa-verification-box">
+        <button id="asa-verify-btn" class="asa-secondary-btn">${t("verificationLabel", LANG)}</button>
+      </div>
 
       <div class="asa-sentiment">
         <strong>${t("sentimentLabel", LANG)}:</strong> ${sentimentLabel(data.sentiment)}
@@ -323,6 +344,10 @@
       .getElementById("asa-add-compare-btn")
       .addEventListener("click", () => addToComparison(product));
 
+    document
+      .getElementById("asa-verify-btn")
+      .addEventListener("click", () => runVerification(product, data));
+
     saveToHistory(product, data);
   }
 
@@ -339,7 +364,6 @@
       summary: data.summary,
       verdict: data.verdict,
       sentiment: data.sentiment,
-      confidence: data.verification ? data.verification.confidence : null,
       timestamp: new Date().toISOString(),
     });
 
