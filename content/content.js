@@ -131,7 +131,12 @@
       10
     );
     const reviews = allMatchTexts(
-      ["[data-test-id='comment-text']", ".comment-text"],
+      [
+        "div[class*='ReviewList-module'] span[style*='text-align']",
+        "div[class*='ReviewCard-module'] span[style]",
+        "[data-test-id='comment-text']",
+        ".comment-text",
+      ],
       8
     );
 
