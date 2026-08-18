@@ -266,6 +266,23 @@
     return t(map[sentiment] || "sentimentUnknown", LANG);
   }
 
+  function confidenceLabel(level) {
+    const map = { high: "confidenceHigh", low: "confidenceLow" };
+    return t(map[level] || "confidenceMedium", LANG);
+  }
+
+  function renderVerificationHtml(v) {
+    if (!v) return "";
+    const concerns = (v.concerns || []).map((c) => `<li>${escapeHtml(c)}</li>`).join("");
+    return `
+      <div class="asa-verification">
+        <strong>${t("verificationLabel", LANG)}:</strong> ${confidenceLabel(v.confidence)}
+        ${concerns ? `<ul class="asa-concerns-list">${concerns}</ul>` : ""}
+        ${v.correction ? `<p class="asa-muted">${escapeHtml(v.correction)}</p>` : ""}
+      </div>
+    `;
+  }
+
   function renderAnalysis(data, product) {
     const prosHtml = (data.pros || []).map((p) => `<li>${escapeHtml(p)}</li>`).join("");
     const consHtml = (data.cons || []).map((c) => `<li>${escapeHtml(c)}</li>`).join("");
@@ -286,6 +303,8 @@
       </div>
       <p class="asa-verdict"><strong>${t("verdict", LANG)}</strong> ${escapeHtml(data.verdict || "")}</p>
 
+      ${renderVerificationHtml(data.verification)}
+
       <div class="asa-sentiment">
         <strong>${t("sentimentLabel", LANG)}:</strong> ${sentimentLabel(data.sentiment)}
         ${data.sentimentSummary ? `<p class="asa-muted">${escapeHtml(data.sentimentSummary)}</p>` : ""}
@@ -303,6 +322,29 @@
     document
       .getElementById("asa-add-compare-btn")
       .addEventListener("click", () => addToComparison(product));
+
+    saveToHistory(product, data);
+  }
+
+  async function saveToHistory(product, data) {
+    const { analysisHistory } = await chrome.storage.local.get("analysisHistory");
+    const list = analysisHistory || [];
+
+    list.unshift({
+      title: product.title,
+      site: product.site,
+      url: product.url,
+      price: product.price,
+      rating: product.rating,
+      summary: data.summary,
+      verdict: data.verdict,
+      sentiment: data.sentiment,
+      confidence: data.verification ? data.verification.confidence : null,
+      timestamp: new Date().toISOString(),
+    });
+
+    // Depolama şişmesin diye en fazla son 30 kaydı tutuyoruz.
+    await chrome.storage.local.set({ analysisHistory: list.slice(0, 30) });
   }
 
   async function addToComparison(product) {

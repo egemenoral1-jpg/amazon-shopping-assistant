@@ -44,7 +44,18 @@ async function handleAnalyzeRequest({ product, purpose }) {
     );
   }
 
-  return analyzeProductWithLLM(product, geminiApiKey, uiLanguage, purpose);
+  const analysis = await analyzeProductWithLLM(product, geminiApiKey, uiLanguage, purpose);
+
+  // İkinci bir model çağrısıyla ilk analizi eleştirel gözle kontrol ediyoruz.
+  // Bu adım başarısız olursa (örn. rate limit), ana analiz sonucu yine de kaybolmasın.
+  let verification = null;
+  try {
+    verification = await verifyAnalysisWithLLM(product, analysis, geminiApiKey, uiLanguage);
+  } catch (err) {
+    verification = null;
+  }
+
+  return { ...analysis, verification };
 }
 
 async function handleCompareRequest({ products, purpose }) {

@@ -3,6 +3,7 @@ const statusEl = document.getElementById("status");
 const analyzeBtn = document.getElementById("analyzeBtn");
 const optionsBtn = document.getElementById("optionsBtn");
 const compareBtn = document.getElementById("compareBtn");
+const historyBtn = document.getElementById("historyBtn");
 
 const SUPPORTED_PAGE_REGEX =
   /amazon\.[a-z.]+\/.*\/dp\/|trendyol\.com\/.+-p-\d|hepsiburada\.com\/.+-p-/;
@@ -13,6 +14,7 @@ async function init() {
   analyzeBtn.textContent = t("analyzeThisPage", lang);
   optionsBtn.textContent = t("setApiKey", lang);
   compareBtn.textContent = t("compareProducts", lang);
+  historyBtn.textContent = t("historyBtn", lang);
 
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   const isProductPage = tab && SUPPORTED_PAGE_REGEX.test(tab.url || "");
@@ -38,6 +40,11 @@ analyzeBtn.addEventListener("click", async () => {
 
 compareBtn.addEventListener("click", () => {
   chrome.tabs.create({ url: chrome.runtime.getURL("compare/compare.html") });
+  window.close();
+});
+
+historyBtn.addEventListener("click", () => {
+  chrome.tabs.create({ url: chrome.runtime.getURL("history/history.html") });
   window.close();
 });
 

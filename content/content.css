@@ -104,6 +104,22 @@
   padding-top: 8px;
   font-size: 12px;
 }
+.asa-verification {
+  margin-top: 10px;
+  border-top: 1px solid #eee;
+  padding-top: 8px;
+  font-size: 12px;
+  background: #fafafa;
+  border-radius: 6px;
+  padding: 8px;
+}
+.asa-concerns-list {
+  margin: 6px 0 0;
+  padding-left: 18px;
+}
+.asa-concerns-list li {
+  margin-bottom: 4px;
+}
 .asa-reviews-details {
   margin-top: 10px;
   border-top: 1px solid #eee;
