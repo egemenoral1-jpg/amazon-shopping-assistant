@@ -1,55 +1,39 @@
-#asa-trigger-btn {
-  position: fixed;
-  bottom: 24px;
-  right: 24px;
-  z-index: 999999;
-  background: #232f3e;
-  color: #fff;
-  border: none;
-  border-radius: 999px;
-  padding: 12px 18px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
-}
-#asa-trigger-btn:hover {
-  background: #37475a;
-}
-
 #asa-panel {
-  position: fixed;
-  bottom: 80px;
-  right: 24px;
-  width: 340px;
-  max-height: 480px;
-  overflow-y: auto;
+  margin: 14px 0;
   background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
-  z-index: 999999;
+  border: 1px solid #d5d9d9;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
   font-family: Arial, sans-serif;
   font-size: 13px;
-}
-#asa-panel.asa-hidden {
-  display: none;
+  max-width: 500px;
+  color: #111;
 }
 
 .asa-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  background: #ff9900;
+  gap: 6px;
+  background: #f7f8f8;
   color: #111;
   padding: 10px 14px;
-  border-radius: 12px 12px 0 0;
+  border-bottom: 1px solid #e7e7e7;
+  border-radius: 8px 8px 0 0;
   font-weight: 700;
 }
-.asa-header button {
-  background: none;
-  border: none;
-  font-size: 18px;
+
+#asa-trigger-btn {
+  background: #ff9900;
+  color: #111;
+  border: 1px solid #a86400;
+  border-radius: 6px;
+  padding: 10px 16px;
+  font-size: 13px;
+  font-weight: 700;
   cursor: pointer;
+}
+#asa-trigger-btn:hover {
+  background: #ffac33;
 }
 
 .asa-body {
@@ -199,14 +183,16 @@
 }
 
 /* ---------- SİTEYE ÖZEL TEMALAR ---------- */
-/* Her site kendi marka renklerini kullansın diye, panel/butonun data-asa-site
-   attribute'üne göre üzerine yazıyoruz. Yukarıdaki kurallar varsayılan (Amazon). */
+/* Her site kendi marka renklerini kullansın diye, panelin data-asa-site
+   attribute'üne göre üzerine yazıyoruz. Yukarıdaki kurallar varsayılan (Amazon).
+   Buton artık panelin İÇİNDE olduğu için seçiciler "torun" (descendant) şeklinde. */
 
 /* Trendyol: turuncu marka rengi */
-#asa-trigger-btn[data-asa-site="trendyol"] {
+#asa-panel[data-asa-site="trendyol"] #asa-trigger-btn {
   background: #f27a1a;
+  border-color: #b85c12;
 }
-#asa-trigger-btn[data-asa-site="trendyol"]:hover {
+#asa-panel[data-asa-site="trendyol"] #asa-trigger-btn:hover {
   background: #d96a12;
 }
 #asa-panel[data-asa-site="trendyol"] .asa-header {
@@ -218,10 +204,11 @@
 }
 
 /* Hepsiburada: turuncu-kırmızı marka rengi */
-#asa-trigger-btn[data-asa-site="hepsiburada"] {
+#asa-panel[data-asa-site="hepsiburada"] #asa-trigger-btn {
   background: #ff6000;
+  border-color: #b84600;
 }
-#asa-trigger-btn[data-asa-site="hepsiburada"]:hover {
+#asa-panel[data-asa-site="hepsiburada"] #asa-trigger-btn:hover {
   background: #e05500;
 }
 #asa-panel[data-asa-site="hepsiburada"] .asa-header {

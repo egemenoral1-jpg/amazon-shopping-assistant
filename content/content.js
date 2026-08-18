@@ -153,38 +153,73 @@
     return { ...data, site, url: location.href, scrapedAt: new Date().toISOString() };
   }
 
+  // Başlık elementini (metin değil, gerçek DOM node'unu) buluyoruz ki panelimizi
+  // tam onun altına, sayfanın doğal akışına yerleştirebilelim. Bu seçiciler zaten
+  // test edilip doğrulanmış olanlarla aynı - ekstra bir tahmin gerekmiyor.
+  const TITLE_SELECTORS = {
+    amazon: ["#productTitle", "#title span"],
+    trendyol: ["h1.pr-new-br", ".product-name", ".pr-in-w h1", "h1"],
+    hepsiburada: ["h1[data-test-id='title']", "h1.product-name", "h1"],
+  };
+
+  function findTitleElement(site) {
+    const selectors = TITLE_SELECTORS[site] || TITLE_SELECTORS.amazon;
+    for (const sel of selectors) {
+      const el = document.querySelector(sel);
+      if (el && el.textContent.trim()) return el;
+    }
+    return null;
+  }
+
+  // Bazı siteler, başlığı sarmalayan kutuya "overflow: hidden" + sabit/küçük
+  // yükseklik veriyor (metni kırpmak için tasarlanmış). Panelimizi oraya
+  // eklersek görünmez şekilde kırpılır. Bu yüzden, uygun bir yer bulana kadar
+  // (en fazla 5 seviye) yukarı çıkıyoruz.
+  function findInsertionAnchor(titleEl) {
+    let el = titleEl;
+    let guard = 0;
+    while (el.parentElement && guard < 5) {
+      const style = getComputedStyle(el.parentElement);
+      if (style.overflow === "hidden" || style.overflowY === "hidden") {
+        el = el.parentElement;
+        guard++;
+        continue;
+      }
+      break;
+    }
+    return el;
+  }
+
   // ---------- 2) ARAYÜZ KATMANI ----------
+  // Panel artık sağ altta yüzen bir kutu değil; sayfanın kendi akışına, ürün
+  // başlığının hemen altına ekleniyor - sanki sitenin kendi bir bölümüymüş gibi.
   function createPanel() {
     if (document.getElementById("asa-panel")) return;
 
     const site = detectSite();
-
-    const btn = document.createElement("button");
-    btn.id = "asa-trigger-btn";
-    btn.dataset.asaSite = site || "";
-    btn.textContent = t("analyzeBtn", LANG);
-    document.body.appendChild(btn);
+    const titleEl = findTitleElement(site);
 
     const panel = document.createElement("div");
     panel.id = "asa-panel";
     panel.dataset.asaSite = site || "";
-    panel.className = "asa-hidden";
     panel.innerHTML = `
       <div class="asa-header">
-        <span>${t("panelTitle", LANG)}</span>
-        <button id="asa-close-btn">×</button>
+        <span>🤖 ${t("panelTitle", LANG)}</span>
       </div>
       <div id="asa-body" class="asa-body">
-        <p class="asa-muted">${t("clickToStart", LANG)}</p>
+        <button id="asa-trigger-btn">${t("analyzeBtn", LANG)}</button>
       </div>
     `;
-    document.body.appendChild(panel);
 
-    document.getElementById("asa-close-btn").addEventListener("click", () => {
-      panel.classList.add("asa-hidden");
-    });
+    if (titleEl && titleEl.parentElement) {
+      const anchor = findInsertionAnchor(titleEl);
+      anchor.insertAdjacentElement("afterend", panel);
+    } else {
+      // Başlık bulunamazsa (beklenmedik bir durum), en azından görünür olsun diye yedek.
+      document.body.prepend(panel);
+    }
 
-    btn.addEventListener("click", handleAnalyzeClick);
+    document.getElementById("asa-trigger-btn").addEventListener("click", handleAnalyzeClick);
   }
 
   // ---------- 2.5) BENZER ÜRÜN ARAMA ----------
@@ -287,9 +322,6 @@
   }
 
   async function handleAnalyzeClick() {
-    const panel = document.getElementById("asa-panel");
-    panel.classList.remove("asa-hidden");
-
     const product = scrapeProduct();
 
     if (!product.title) {
