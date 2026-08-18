@@ -16,13 +16,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 });
 
 async function handleAnalyzeRequest(product) {
-  const { anthropicApiKey } = await chrome.storage.sync.get("anthropicApiKey");
+  const { geminiApiKey } = await chrome.storage.sync.get("geminiApiKey");
 
-  if (!anthropicApiKey) {
+  if (!geminiApiKey) {
     throw new Error(
-      "API anahtarı ayarlanmamış. Eklenti ayarlarından Anthropic API anahtarınızı girin."
+      "API anahtarı ayarlanmamış. Eklenti ayarlarından Google Gemini API anahtarınızı girin."
     );
   }
 
-  return analyzeProductWithLLM(product, anthropicApiKey);
+  return analyzeProductWithLLM(product, geminiApiKey);
 }

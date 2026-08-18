@@ -7,7 +7,7 @@
   "host_permissions": [
     "https://www.amazon.com/*",
     "https://www.amazon.com.tr/*",
-    "https://api.anthropic.com/*"
+    "https://generativelanguage.googleapis.com/*"
   ],
   "background": {
     "service_worker": "background/background.js"
