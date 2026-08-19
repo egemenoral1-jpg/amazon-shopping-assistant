@@ -336,6 +336,12 @@
     return { text: bestText, num: bestNum === -Infinity ? null : bestNum };
   }
 
+  // "Ek 100 TL KuponEk 100 TL KuponMSI Cyborg..." gibi başlığın önüne
+  // yapışan kupon/rozet metinlerini temizliyoruz.
+  function cleanTitle(title) {
+    return title.replace(/^(Ek\s*[\d.,]+\s*TL\s*Kupon\s*)+/gi, "").trim();
+  }
+
   function extractCandidatesFromSearchHtml(doc, site, currentProduct) {
     const pattern = site === "amazon" ? "a[href*='/dp/']" : "a[href*='-p-']";
     const anchors = Array.from(doc.querySelectorAll(pattern));
@@ -370,6 +376,7 @@
       const container = a.closest("div,li,article") || a;
       let title = (a.textContent || "").trim();
       if (title.length < 5) title = container.textContent.trim().slice(0, 140);
+      title = cleanTitle(title);
       if (!title) continue;
       if (title.trim().toLowerCase() === currentTitleNorm) continue;
 
