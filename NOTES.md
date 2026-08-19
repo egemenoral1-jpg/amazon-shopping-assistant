@@ -8,3 +8,4 @@ Not 3 - guncelleme
 Not 4 - guncelleme 
 Not 5 - guncelleme 
 Not 6 - guncelleme 
+Not 7 - guncelleme 
