@@ -21,6 +21,25 @@
 
   const SITE_LABELS = { amazon: "Amazon", trendyol: "Trendyol", hepsiburada: "Hepsiburada" };
 
+  // Her sitenin kendi marka kimliğiyle (isim, rozet, gradient renk) görünmesi için.
+  const SITE_THEME = {
+    amazon: {
+      name: "Amazon Shopping Assistant",
+      badge: "AI",
+      gradient: "linear-gradient(135deg, #232f3e 0%, #0f1621 100%)",
+    },
+    trendyol: {
+      name: "Trendyol Asistan AI",
+      badge: "Beta",
+      gradient: "linear-gradient(135deg, #ff9a3c 0%, #ff5b1f 100%)",
+    },
+    hepsiburada: {
+      name: "HepsiAI Asistan",
+      badge: "Beta",
+      gradient: "linear-gradient(135deg, #7b2ff7 0%, #f9573b 100%)",
+    },
+  };
+
   // ---------- 1) KAZIMA (SCRAPING) KATMANI ----------
   // Her site için ayrı bir fonksiyon var çünkü DOM yapıları tamamen farklı.
   // Her alan için birden fazla CSS seçici deniyoruz (fallback listesi), çünkü
@@ -191,24 +210,30 @@
   }
 
   // ---------- 2) ARAYÜZ KATMANI ----------
-  // Panel artık sağ altta yüzen bir kutu değil; sayfanın kendi akışına, ürün
-  // başlığının hemen altına ekleniyor - sanki sitenin kendi bir bölümüymüş gibi.
+  // Panel artık sayfanın kendi akışına, ürün başlığının hemen altına ekleniyor
+  // ve her sitenin kendi marka renkleriyle (gradient, isim, rozet) görünüyor.
   function createPanel() {
     if (document.getElementById("asa-panel")) return;
 
     const site = detectSite();
     const titleEl = findTitleElement(site);
+    const theme = SITE_THEME[site] || SITE_THEME.amazon;
+    const taglineKey = "bannerTagline" + (site ? site[0].toUpperCase() + site.slice(1) : "Amazon");
+    const tagline = t(taglineKey, LANG);
 
     const panel = document.createElement("div");
     panel.id = "asa-panel";
     panel.dataset.asaSite = site || "";
     panel.innerHTML = `
-      <div class="asa-header">
-        <span>🤖 ${t("panelTitle", LANG)}</span>
+      <div class="asa-banner" id="asa-banner-trigger" style="background:${theme.gradient}">
+        <div class="asa-avatar">🤖</div>
+        <div class="asa-banner-text">
+          <div class="asa-banner-title">${theme.name} <span class="asa-badge">${theme.badge}</span></div>
+          <div class="asa-banner-tagline">${tagline}</div>
+        </div>
+        <button id="asa-dismiss-btn" class="asa-dismiss-btn" title="Kapat">×</button>
       </div>
-      <div id="asa-body" class="asa-body">
-        <button id="asa-trigger-btn">${t("analyzeBtn", LANG)}</button>
-      </div>
+      <div id="asa-body" class="asa-body"></div>
     `;
 
     if (titleEl && titleEl.parentElement) {
@@ -219,7 +244,11 @@
       document.body.prepend(panel);
     }
 
-    document.getElementById("asa-trigger-btn").addEventListener("click", handleAnalyzeClick);
+    document.getElementById("asa-banner-trigger").addEventListener("click", handleAnalyzeClick);
+    document.getElementById("asa-dismiss-btn").addEventListener("click", (e) => {
+      e.stopPropagation();
+      panel.remove();
+    });
   }
 
   // ---------- 2.5) BENZER ÜRÜN ARAMA ----------
@@ -240,11 +269,83 @@
     return `${location.origin}/s?k=${q}`; // amazon.com ya da amazon.com.tr, hangisindeysek
   }
 
-  function extractCandidatesFromSearchHtml(doc, site, currentUrl) {
+  // Sorgu string'i (tracking parametreleri vb.) farklı olsa bile aynı ürünü
+  // tanıyabilmek için URL'yi origin + path'e indirgiyoruz.
+  function normalizeUrl(u) {
+    try {
+      const url = new URL(u);
+      return url.origin + url.pathname;
+    } catch {
+      return u;
+    }
+  }
+
+  // URL'ler farklı görünse bile (tracking parametresi, varyant seçimi vb.)
+  // aynı ürünü kesin olarak tanıyabilmek için, adresin içindeki gerçek ürün
+  // kimliğini çıkarıyoruz (Amazon: ASIN, Trendyol/Hepsiburada: "-p-" sonrası kod).
+  function extractProductId(url, site) {
+    try {
+      const path = new URL(url).pathname;
+      if (site === "amazon") {
+        const m = path.match(/\/dp\/([A-Za-z0-9]{10})/);
+        return m ? m[1].toUpperCase() : null;
+      }
+      const m = path.match(/-p-([a-zA-Z0-9]+)/);
+      return m ? m[1].toUpperCase() : null;
+    } catch {
+      return null;
+    }
+  }
+
+  // "1.234,56 TL" (TR) ya da "1,234.56" (EN) gibi fiyat metinlerini sayıya çeviriyoruz.
+  function parsePriceToNumber(str) {
+    if (!str) return null;
+    const cleaned = str.replace(/[^\d.,]/g, "");
+    if (!cleaned) return null;
+
+    const lastComma = cleaned.lastIndexOf(",");
+    const lastDot = cleaned.lastIndexOf(".");
+
+    let normalized;
+    if (lastComma > lastDot) {
+      normalized = cleaned.replace(/\./g, "").replace(",", "."); // TR format
+    } else if (lastDot > lastComma) {
+      normalized = cleaned.replace(/,/g, ""); // EN format
+    } else {
+      normalized = cleaned;
+    }
+
+    const num = parseFloat(normalized);
+    return isNaN(num) ? null : num;
+  }
+
+  // Bir kutunun (ürün kartının) metninde birden fazla "TL" geçen rakam olabilir
+  // (taksit tutarı, kupon indirimi, gerçek fiyat...). Bunların içinden EN
+  // BÜYÜĞÜ genelde gerçek fiyattır - taksit/kupon rakamları küçük çıkar.
+  function extractBestPrice(text) {
+    const matches = text.matchAll(/[\d]{1,3}(?:[.,]\d{3})*(?:[.,]\d{1,2})?\s*(TL|₺|\$)/g);
+    let bestText = null;
+    let bestNum = -Infinity;
+    for (const m of matches) {
+      const num = parsePriceToNumber(m[0]);
+      if (num !== null && num > bestNum) {
+        bestNum = num;
+        bestText = m[0].trim();
+      }
+    }
+    return { text: bestText, num: bestNum === -Infinity ? null : bestNum };
+  }
+
+  function extractCandidatesFromSearchHtml(doc, site, currentProduct) {
     const pattern = site === "amazon" ? "a[href*='/dp/']" : "a[href*='-p-']";
     const anchors = Array.from(doc.querySelectorAll(pattern));
     const seen = new Set();
     const results = [];
+
+    const currentUrlNorm = normalizeUrl(currentProduct.url);
+    const currentProductId = extractProductId(currentProduct.url, site);
+    const currentTitleNorm = (currentProduct.title || "").trim().toLowerCase();
+    const currentPriceNum = parsePriceToNumber(currentProduct.price);
 
     for (const a of anchors) {
       const href = a.getAttribute("href");
@@ -256,24 +357,36 @@
       } catch {
         continue;
       }
-      if (seen.has(absUrl) || absUrl === currentUrl) continue;
+
+      // Kendi ürünümüzü (aynı ürün ID'si, aynı URL, ya da birebir aynı başlık
+      // olabilir) listeye katmıyoruz. ID karşılaştırması en güvenilir yöntem
+      // çünkü URL'de küçük farklar (tracking parametresi vb.) olsa da değişmiyor.
+      const candidateId = extractProductId(absUrl, site);
+      if (candidateId && currentProductId && candidateId === currentProductId) continue;
+      if (normalizeUrl(absUrl) === currentUrlNorm) continue;
+      if (seen.has(absUrl)) continue;
       seen.add(absUrl);
 
       const container = a.closest("div,li,article") || a;
       let title = (a.textContent || "").trim();
       if (title.length < 5) title = container.textContent.trim().slice(0, 140);
       if (!title) continue;
+      if (title.trim().toLowerCase() === currentTitleNorm) continue;
 
-      const priceMatch = container.textContent.match(
-        /[\d]{1,3}(?:[.,]\d{3})*(?:[.,]\d{1,2})?\s*(TL|₺|\$)/
-      );
+      const best = extractBestPrice(container.textContent);
+      const priceText = best.text;
+      const priceNum = best.num;
 
-      results.push({
-        title: title.slice(0, 140),
-        url: absUrl,
-        price: priceMatch ? priceMatch[0].trim() : null,
-      });
+      // Fiyat okuma bu sitelerde güvenilir değil (taksit/kupon rakamları
+      // karışabiliyor), o yüzden sadece AŞIRI uçtaki (ör. 5 kattan fazla
+      // ucuz/pahalı) belirgin uyumsuzlukları eliyoruz; asıl güvendiğimiz
+      // filtre başlık/ID eşleşmesi.
+      if (currentPriceNum && priceNum && priceNum >= 50) {
+        const ratio = priceNum / currentPriceNum;
+        if (ratio < 0.2 || ratio > 5) continue;
+      }
 
+      results.push({ title: title.slice(0, 140), url: absUrl, price: priceText });
       if (results.length >= 8) break;
     }
 
@@ -290,7 +403,7 @@
       const res = await fetch(searchUrl, { credentials: "include" });
       const html = await res.text();
       const doc = new DOMParser().parseFromString(html, "text/html");
-      const candidates = extractCandidatesFromSearchHtml(doc, product.site, product.url);
+      const candidates = extractCandidatesFromSearchHtml(doc, product.site, product);
 
       if (candidates.length === 0) {
         box.innerHTML = `<p class="asa-muted">${t("noAlternatives", LANG)}</p>`;
