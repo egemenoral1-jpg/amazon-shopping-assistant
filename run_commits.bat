@@ -1,1 +1,0 @@
-@echo off for /L %%i in (1,1,10) do ( echo Not %%i - guncelleme >> NOTES.md git add -A git commit -m "Kucuk not guncellemesi %%i" ) git push echo TAMAMLANDI pause
